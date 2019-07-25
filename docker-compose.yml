@@ -25,6 +25,7 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    working_dir: /var/www
     volumes:
       - ./www:/var/www/
       - ./nginx/conf.d/:/etc/nginx/conf.d/
@@ -42,14 +43,8 @@ services:
       MYSQL_ROOT_PASSWORD: root
       SERVICE_TAG: dev
       SERVICE_NAME: mysql
-    volumes:
-      - dbdata:/var/lib/mysql
-      - ./mysql/my.cnf:/etc/mysql/my.cnf
     networks:
       - app-network
 networks:
   app-network:
     driver: bridge
-volumes:
-  dbdata:
-    driver: local
