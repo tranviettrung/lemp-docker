@@ -3,27 +3,37 @@ FROM php:7.2-fpm
 # Set working directory
 WORKDIR /var/www
 
-# Install dependencies
+RUN apt-get update && apt-get install -y pkg-config patch
+ADD https://git.archlinux.org/svntogit/packages.git/plain/trunk/freetype.patch?h=packages/php /tmp/freetype.patch
+RUN docker-php-source extract; \
+  cd /usr/src/php; \
+  patch -p1 -i /tmp/freetype.patch; \
+  rm /tmp/freetype.patch
+
+# Install System Dependencies
 RUN apt-get update && apt-get install -y \
-  build-essential \
-  libpng-dev \
-  libjpeg62-turbo-dev \
   libfreetype6-dev \
+  libjpeg62-turbo-dev \
+  libjpeg-dev \
   libmcrypt-dev \
+  libpng-dev \
   libxml2-dev \
-  locales \
-  zip \
-  jpegoptim optipng pngquant gifsicle \
-  vim \
-  unzip \
-  git \
-  curl
+  libxslt-dev \
+  zlib1g-dev \
+  mariadb-client \
+  && docker-php-ext-install bcmath \
+  && docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ \
+  && docker-php-ext-install -j$(nproc) gd \
+  && docker-php-ext-install exif \
+  && docker-php-ext-install intl \
+  && docker-php-ext-install pdo_mysql \
+  && docker-php-ext-install soap \
+  && docker-php-ext-install xsl \
+  && docker-php-ext-install zip \
+  && rm -rf /var/lib/apt/lists/*
 
 # Add host's user group
 RUN usermod -u 1000 www-data
-
-# Install extensions
-RUN docker-php-ext-install bcmath pdo_mysql zip exif pcntl
 
 # Install composer
 RUN curl -sS https://getcomposer.org/installer -o ~/composer-setup.php && php ~/composer-setup.php --install-dir=/usr/local/bin --filename=composer
